@@ -147,6 +147,7 @@ export default function Page() {
         Solana Wallet Integration
       </h1>
 
+      {/* Notification Section */}
       {notificationMessage && (
         <div
           className={`flex items-center p-4 mb-4 text-${
@@ -177,7 +178,7 @@ export default function Page() {
                 Connecting to wallet...
               </>
             ) : (
-              "Connect Wallet"
+              "Connect Phantom Wallet"
             )}
           </button>
         ) : (
