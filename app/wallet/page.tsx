@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Connection,
   PublicKey,
@@ -15,12 +15,8 @@ export default function Page() {
   const [isConnected, setIsConnected] = useState(false);
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
-  const [notificationMessage, setNotificationMessage] = useState<string | null>(
-    null
-  );
-  const [notificationType, setNotificationType] = useState<
-    "success" | "error" | null
-  >(null);
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null);
+  const [notificationType, setNotificationType] = useState<"success" | "error" | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [explorerLink, setExplorerLink] = useState<string | null>(null);
 
@@ -44,7 +40,7 @@ export default function Page() {
       } else {
         alert("Please install Phantom Wallet!");
       }
-    } catch (error) {
+    } catch {
       setNotificationMessage("Failed to connect wallet.");
       setNotificationType("error");
     } finally {
@@ -52,23 +48,18 @@ export default function Page() {
     }
   };
 
-  const getBalance = async () => {
+  const getBalance = useCallback(async () => {
     if (walletAddress) {
-      const connection = new Connection(
-        "https://api.devnet.solana.com",
-        "confirmed"
-      );
+      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
       const publicKey = new PublicKey(walletAddress);
       const walletBalance = await connection.getBalance(publicKey);
       setBalance(walletBalance / 1e9);
     }
-  };
+  }, [walletAddress]);
 
   const sendTransaction = async () => {
     if (!walletAddress || !recipientAddress || !amount) {
-      setNotificationMessage(
-        "Please enter a valid recipient address and amount."
-      );
+      setNotificationMessage("Please enter a valid recipient address and amount.");
       setNotificationType("error");
       return;
     }
@@ -77,10 +68,7 @@ export default function Page() {
     setExplorerLink(null);
 
     try {
-      const connection = new Connection(
-        "https://api.devnet.solana.com",
-        "confirmed"
-      );
+      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
       const fromPublicKey = new PublicKey(walletAddress);
       const toPublicKey = new PublicKey(recipientAddress);
       const lamports = parseFloat(amount) * 1e9;
@@ -98,9 +86,7 @@ export default function Page() {
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = fromPublicKey;
 
-      const { signature } = await window.solana.signAndSendTransaction(
-        transaction
-      );
+      const { signature } = await window.solana.signAndSendTransaction(transaction);
 
       const explorerLink = `https://explorer.solana.com/tx/${signature}?cluster=devnet`;
       setExplorerLink(explorerLink);
@@ -111,7 +97,7 @@ export default function Page() {
       setNotificationType("success");
 
       getBalance();
-    } catch (error) {
+    } catch {
       setNotificationMessage("Transaction failed. Please try again.");
       setNotificationType("error");
     } finally {
@@ -128,7 +114,7 @@ export default function Page() {
     if (walletAddress) {
       getBalance();
     }
-  }, [walletAddress]);
+  }, [walletAddress, getBalance]);
 
   useEffect(() => {
     if (notificationMessage) {
@@ -143,16 +129,10 @@ export default function Page() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">
-        Solana Wallet Integration
-      </h1>
-
-      {/* Notification Section */}
+      <h1 className="text-3xl font-bold text-gray-800 mb-8">Solana Wallet Integration</h1>
       {notificationMessage && (
         <div
-          className={`flex items-center p-4 mb-4 text-${
-            notificationType === "success" ? "green" : "red"
-          }-700 bg-green-200 rounded-lg shadow-md w-full sm:w-96`}
+          className={`flex items-center p-4 mb-4 text-${notificationType === "success" ? "green" : "red"}-700 bg-green-200 rounded-lg shadow-md w-full sm:w-96`}
         >
           <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path
@@ -174,8 +154,7 @@ export default function Page() {
           >
             {loading ? (
               <>
-                <span className="loading loading-spinner text-success"></span>{" "}
-                Connecting to wallet...
+                <span className="loading loading-spinner text-success"></span> Connecting to wallet...
               </>
             ) : (
               "Connect Phantom Wallet"
@@ -209,15 +188,12 @@ export default function Page() {
               />
               <button
                 onClick={sendTransaction}
-                className={`w-full btn ${
-                  loading ? "bg-green-500" : "btn-success"
-                }`}
+                className={`w-full btn ${loading ? "bg-green-500" : "btn-success"}`}
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <span className="loading loading-spinner text-success"></span>{" "}
-                    <span className="text-green-700">Sending SOL...</span>
+                    <span className="loading loading-spinner text-success"></span> <span className="text-green-700">Sending SOL...</span>
                   </>
                 ) : (
                   "Send SOL"
